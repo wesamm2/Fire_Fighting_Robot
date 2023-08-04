@@ -1,0 +1,515 @@
+//----------servo------------
+#include<Servo.h>
+Servo myservo;
+int  pos =0 ;
+//----------ultrasonic1------------
+#define TRIG1 2 //******
+#define ECHO1 3 //******
+const int  maxdistance1 = 10;
+float duration_us1 ,distance_cm1 ;
+//----------ultrasonic2------------
+#define TRIG2 6
+#define ECHO2 4 
+const int  maxdistance2 = 10;
+float duration_us2 ,distance_cm2 ;
+//----------ultrasonic3------------
+#define TRIG3 7
+#define ECHO3 5 
+const int  maxdistance3 = 10;
+float duration_us3 ,distance_cm3 ;
+
+//----------------------
+#define leftMotor1  9
+#define leftMotor2  8
+#define rightMotor1 11
+#define rightMotor2 10
+//-----------------
+int enl = 13;//******
+int enr = 12;//******
+//-----------------
+// speed of motor
+int spdL=70;
+int spdR=80;
+//-----------------
+int buzzer =14 ;//*******
+//int led =50;
+//-----------------
+int farleftflame=16;//******
+int leftmidflame=17;//******
+int rightmidflame=18;//*****
+int farrightflame=19;//*****
+
+//-----------------
+ int flamesensorvaluefarleft =0;  
+ int flamesensorvaluefarright=0 ;
+ int flamesensorvaluemidright=0 ;
+ int flamesensorvaluemidleft =0;
+ 
+ //---------pump --------
+  int N_1= 22 ;//*******
+  //int N_2= 17;//*******
+//  int N_3= 18;//*******
+//  int N_4= 19;//*******
+
+//==========================================
+ 
+//==========================================
+//---------------OUTPUT---------------------
+void setup() 
+{ 
+  myservo.attach(15);//****
+  
+  pinMode(leftMotor1, OUTPUT);
+  pinMode(leftMotor2, OUTPUT);
+  pinMode(rightMotor1, OUTPUT);
+  pinMode(rightMotor2, OUTPUT);
+  
+  pinMode(enl, INPUT);
+  pinMode(enr, INPUT);
+  //------------------------------------------------------
+  analogWrite(enl,spdL);
+  analogWrite(enr,spdR);
+  //------------------------------------------------------
+  pinMode(TRIG1, OUTPUT);
+  pinMode(ECHO1, INPUT);
+  //------------------------------------------------------
+  pinMode(TRIG2, OUTPUT);
+  pinMode(ECHO2, INPUT);
+  //------------------------------------------------------
+  pinMode(TRIG3, OUTPUT);
+  pinMode(ECHO3, INPUT);
+  
+  //------------------------------------------------------
+  pinMode(buzzer, OUTPUT);
+ // pinMode(led , OUTPUT);
+//------------------------------------------------------
+
+  pinMode(farleftflame, INPUT);//*****
+  pinMode(leftmidflame, INPUT);//*****
+  pinMode(rightmidflame, INPUT);//*****
+  pinMode(farrightflame, INPUT);//*****
+  
+//=========================================
+pinMode(N_1,OUTPUT);
+//pinMode(N_2,OUTPUT);//****
+//pinMode(N_3,OUTPUT);
+//pinMode(N_4,OUTPUT);//****
+//======================================================
+
+   Serial.begin(9600);   
+   delay(500);
+  Serial.println("Started !!");
+    delay(1000);  
+
+}
+
+void loop() 
+{ 
+    readSensors();
+    Serial.print("far L=");
+    Serial.println(digitalRead(farleftflame));//*****
+    Serial.print("far R=");
+    Serial.println(digitalRead(farrightflame));//****
+        Serial.print("L m=");
+    Serial.println(digitalRead(leftmidflame));//*****
+    Serial.print("R m=");
+    Serial.println(digitalRead(rightmidflame));//*****
+
+
+   digitalWrite(TRIG1 ,LOW);
+    delayMicroseconds(10);
+    digitalWrite(TRIG1 ,HIGH);   
+    duration_us1= pulseIn(ECHO1 ,HIGH);
+    distance_cm1= 0.017*duration_us1;
+     Serial.print("U=");
+    Serial.println(distance_cm1);
+
+    digitalWrite(TRIG2 ,LOW);
+    delayMicroseconds(10);
+    digitalWrite(TRIG2 ,HIGH);   
+    duration_us2= pulseIn(ECHO2 ,HIGH);
+    distance_cm2= 0.017*duration_us2;
+     Serial.print("U=");
+    Serial.println(distance_cm2);
+
+    digitalWrite(TRIG3 ,LOW);
+    delayMicroseconds(10);
+    digitalWrite(TRIG3 ,HIGH);   
+    duration_us3= pulseIn(ECHO3 ,HIGH);
+    distance_cm3= 0.017*duration_us3;
+     Serial.print("U=");
+    Serial.println(distance_cm3);
+
+    if(distance_cm1>=40 && distance_cm2>=40 && distance_cm3>=40 && flamesensorvaluefarleft==0 && flamesensorvaluefarright==0 &&  flamesensorvaluemidleft==0&& flamesensorvaluemidright==0)
+    {
+      straight();
+        delay(50);
+        Serial.println("str");
+        digitalWrite(22,LOW);
+        //digitalWrite(18,LOW);
+    }
+    else if ( flamesensorvaluefarleft==1 && flamesensorvaluefarright==0&&  flamesensorvaluemidleft==1 && flamesensorvaluemidright==0) // ultra =1  && left =1 && right =0
+     {   
+        done();  
+        delay (50);
+        turnleft(); 
+        delay(100);
+        Serial.println("left");
+        digitalWrite(22,LOW);
+       // digitalWrite(18,LOW);
+     }
+      else if (flamesensorvaluefarleft==0 && flamesensorvaluefarright==1 &&  flamesensorvaluemidleft==0 && flamesensorvaluemidright==1 ) // ultra =1  && left =0 && right =1
+     {   
+        done();
+        delay (50);
+        turnright();
+        delay(100 );
+        Serial.println("right");
+        digitalWrite(22,LOW);
+       // digitalWrite(18,LOW);
+     }
+     else if (flamesensorvaluefarleft==1 && flamesensorvaluefarright==0 &&  flamesensorvaluemidleft==0 && flamesensorvaluemidright==0 ) // ultra =1  && left =0 && right =1
+     {   
+        done();
+        delay (50);
+         turnleft();
+        delay(100);
+        Serial.println("straight");
+        digitalWrite(22,LOW);
+       // digitalWrite(18,LOW);
+     }
+     else if (flamesensorvaluefarleft==0 && flamesensorvaluefarright==1 &&  flamesensorvaluemidleft==0 && flamesensorvaluemidright==0) // ultra =1  && left =0 && right =1
+     {   
+        done();
+        delay (50);
+         turnright();
+        delay(100);
+        Serial.println("straight");
+        digitalWrite(22,LOW);
+        // digitalWrite(18,LOW);
+     }
+     else if( flamesensorvaluefarleft==1 && flamesensorvaluefarright==0 &&  flamesensorvaluemidleft==1&& flamesensorvaluemidright==1)
+    {
+        turnleft();
+        delay(500);//***  
+    }/*
+     else if( flamesensorvaluefarleft==1 && flamesensorvaluefarright==0 &&  flamesensorvaluemidleft==1&& flamesensorvaluemidright==0)
+    {
+        turnleft();
+        delay(500);//***  
+    }*/
+     else if( flamesensorvaluefarleft==0 && flamesensorvaluefarright==1 &&  flamesensorvaluemidleft==1&& flamesensorvaluemidright==1)
+    {
+        turnright();
+        delay(300);//***  
+    }
+     else if( flamesensorvaluefarleft==0 && flamesensorvaluefarright==1&&  flamesensorvaluemidleft==0&& flamesensorvaluemidright==1)
+    {
+        turnright();
+        delay(500);//***  
+    }
+    else if(distance_cm1<=40 && flamesensorvaluefarleft==0 && flamesensorvaluefarright==0 &&  flamesensorvaluemidleft==0 && flamesensorvaluemidright==0) // ultra =1  && left =0 && right =0
+    {
+        done();
+        delay (100); //*** 
+        back ();
+        delay (100); //***
+        turnright();
+        delay(100);//***      
+        Serial.println("right");
+        digitalWrite(22,LOW);
+      //  digitalWrite(18,LOW);
+    }
+      else if(distance_cm1<=40 &&distance_cm2<=40 && flamesensorvaluefarleft==0 && flamesensorvaluefarright==0 &&  flamesensorvaluemidleft==0 && flamesensorvaluemidright==0) // ultra =1  && left =0 && right =0
+    {
+        done();
+        delay (100); //*** 
+        back ();
+        delay (200); //***
+        turnleft();
+        delay(200);//***      
+        Serial.println("right");
+        digitalWrite(22,LOW);
+       // digitalWrite(18,LOW);
+    }
+    /* else if(distance_cm1<=40&&distance_cm2<=40&& distance_cm3<=40&& flamesensorvaluefarleft==1 && flamesensorvaluefarright==1 &&  flamesensorvaluemidleft==1&& flamesensorvaluemidright==1)
+    {
+       done();
+       tone (buzzer,5000);
+       delay (100); 
+       fireon() ;
+       noTone (buzzer);
+       delay (100);  
+    }
+*/
+    else if(distance_cm1>=40&&distance_cm2<=40&& flamesensorvaluefarleft==0 && flamesensorvaluefarright==0 &&  flamesensorvaluemidleft==0&& flamesensorvaluemidright==0)
+    {
+      done();
+        delay (100); //*** 
+        back ();
+        delay (200); //***
+         turnright();
+        delay(200);//***      
+    }
+    
+    else if(distance_cm1>=40&&distance_cm3<=40&& flamesensorvaluefarleft==0 && flamesensorvaluefarright==0 &&  flamesensorvaluemidleft==0&& flamesensorvaluemidright==0)
+    {
+      done();
+        delay (100); //*** 
+        back ();
+        delay (200); //***
+        turnleft(); 
+        delay(200);//***      
+    }
+      else if(distance_cm1>=40&&distance_cm2<=40&& flamesensorvaluefarleft==1 && flamesensorvaluefarright==1 &&  flamesensorvaluemidleft==1&& flamesensorvaluemidright==1)
+    {
+      done();
+        delay (100); //*** 
+        back ();
+        delay (300); //***
+        turnleft();
+        delay(500);//***      
+    }
+    else if(distance_cm1>=40&&distance_cm3<=40&& flamesensorvaluefarleft==1 && flamesensorvaluefarright==1 &&  flamesensorvaluemidleft==1&& flamesensorvaluemidright==1)
+    {
+      done();
+        delay (100); //*** 
+        back ();
+        delay (300); //***
+        turnright(); 
+        delay(500);//***      
+    }
+    /*
+    else if(distance_cm1<=30& &distance_cm2<=30&& flamesensorvaluefarleft==1 && flamesensorvaluefarright==1 &&  flamesensorvaluemidleft==1&& flamesensorvaluemidright==1)
+    {
+       done();
+       tone (buzzer,9000);
+       delay (100); 
+      // digitalWrite(led ,HIGH);
+      //delay (50);
+       fireon() ;
+       noTone (buzzer);
+       delay (100);      
+    }
+   else if(distance_cm1<=30&& distance_cm3<=30&& flamesensorvaluefarleft==1 && flamesensorvaluefarright==1 &&  flamesensorvaluemidleft==1&& flamesensorvaluemidright==1)
+    {
+       done();
+       tone (buzzer,9000);
+       delay (100); 
+       fireon() ;
+       noTone (buzzer);
+       delay (100);  
+    }*/
+
+      else if(distance_cm1<=30& &distance_cm2<=30&& flamesensorvaluefarleft==1 && flamesensorvaluefarright==1 &&  flamesensorvaluemidleft==1&& flamesensorvaluemidright==1)
+    {
+       done();
+        delay (100); //*** 
+        back ();
+        delay (200); //***
+        turnleft();
+        delay(300);//***       
+    }
+   else if(distance_cm1<=30&& distance_cm3<=30&& flamesensorvaluefarleft==1 && flamesensorvaluefarright==1 &&  flamesensorvaluemidleft==1&& flamesensorvaluemidright==1)
+    {
+       done();
+        delay (100); //*** 
+        back ();
+        delay (200); //***
+        turnright();
+        delay(300);//***  
+    }
+    else if( distance_cm2<=30&& flamesensorvaluefarleft==1 && flamesensorvaluefarright==0 &&  flamesensorvaluemidleft==1&& flamesensorvaluemidright==1)
+    {
+        turnleft();
+        delay(300);//***  
+    }
+    else if( distance_cm3<=30&& flamesensorvaluefarleft==0 && flamesensorvaluefarright==1 &&  flamesensorvaluemidleft==1&& flamesensorvaluemidright==1)
+    {
+        turnright();
+        delay(300);//***  
+    }/*
+    else if( distance_cm3<=30&& flamesensorvaluefarleft==1 && flamesensorvaluefarright==0 &&  flamesensorvaluemidleft==1&& flamesensorvaluemidright==1)
+    {
+        turnright();
+        delay(300);//***  
+    }*/
+    else if( distance_cm2<=30&& flamesensorvaluefarleft==0 && flamesensorvaluefarright==0&&  flamesensorvaluemidleft==0&& flamesensorvaluemidright==0)
+    {
+        turnright();
+        delay(300);//***  
+    }
+    else if(distance_cm3<=30&& flamesensorvaluefarleft==0 && flamesensorvaluefarright==0 &&  flamesensorvaluemidleft==0&& flamesensorvaluemidright==0)
+    {
+        turnleft();
+        delay(300);//***  
+    }
+    
+    /* 
+   else if(distance_cm1>=40 && flamesensorvaluefarleft==0 && flamesensorvaluefarright==0 &&  flamesensorvaluemidleft==0&& flamesensorvaluemidright==0) // ultra =0  && left =0 && right =0
+    { 
+        straight();
+        delay(50);
+        Serial.println("str");
+        digitalWrite(16,LOW);
+        digitalWrite(18,LOW);
+    }*/
+    else if(distance_cm1<=40 && flamesensorvaluefarleft==0 && flamesensorvaluefarright==0 &&  flamesensorvaluemidleft==0 && flamesensorvaluemidright==0) // ultra =1  && left =0 && right =0
+    {
+        done();
+        delay (100); //*** 
+        back ();
+        delay (100); //***
+        turnright();
+        delay(100);//***      
+        Serial.println("right");
+        digitalWrite(22,LOW);
+      //  digitalWrite(18,LOW);
+    }
+    
+     else if ( flamesensorvaluefarleft==1 && flamesensorvaluefarright==1 &&  flamesensorvaluemidleft==1 && flamesensorvaluemidright==1 ) // ultra =1  && left =1 && right =1
+     {   
+       done();
+       delay(200);
+       /* tone (buzzer,5000);
+        delay(500);
+        noTone (buzzer);
+   */ 
+        if(distance_cm1>=30)
+          {
+             //analogWrite(enl,90);
+             //analogWrite(enr,90);
+             digitalWrite(22,LOW);
+             delay(50);
+             straight();
+             delay(500);
+             done();
+             delay(10);
+             tone(buzzer,5000);
+             delay(500);
+           //  digitalWrite(led ,HIGH);
+           //  delay (50);
+             noTone (buzzer);
+           //  digitalWrite(led ,LOW);
+          }
+        else
+          { 
+            done();
+            delay(100);
+            fireon() ;  
+            delay (1000);
+            noTone (buzzer);
+            delay (500);
+          }
+          
+          
+     }
+      else if ( distance_cm1<=30&& flamesensorvaluefarleft==1 && flamesensorvaluefarright==1 &&  flamesensorvaluemidleft==1 && flamesensorvaluemidright==1 ) // ultra =1  && left =1 && right =1
+     {   
+       done();
+       tone (buzzer,5000);
+       delay (100); 
+      // digitalWrite(led ,HIGH);
+      //delay (50);
+       fireon() ;
+       noTone (buzzer);
+       delay (100);  
+      // digitalWrite(led ,LOW);
+      // delay (50); 
+     }
+}
+
+//===========================================================
+//--------------------Read Sensor Value----------------------
+
+    void readSensors()  //accepts input from sensors
+    {
+      flamesensorvaluefarleft  = digitalRead(farleftflame);//****
+      flamesensorvaluefarright = digitalRead(farrightflame);//****
+      flamesensorvaluemidleft=digitalRead(leftmidflame);//****
+      flamesensorvaluemidright=digitalRead(rightmidflame);//***
+    }
+    
+//===========================================================
+//----------------------back-----------------------------
+
+    void back()
+    {  
+      digitalWrite(leftMotor1, HIGH);
+      digitalWrite(leftMotor2, LOW);
+      digitalWrite(rightMotor1, HIGH);
+      digitalWrite(rightMotor2, LOW);
+      delay(1);
+    }
+    
+  //===========================================================
+//----------------------turnright-----------------------------
+
+    void turnright()
+    {
+      digitalWrite(leftMotor1, HIGH);
+      digitalWrite(leftMotor2, LOW);
+      digitalWrite(rightMotor1, LOW);
+      digitalWrite(rightMotor2, HIGH);  
+      delay(1);
+    }
+    //===========================================================
+//----------------------stop-----------------------------
+
+    void done()
+    {
+      digitalWrite(leftMotor1, LOW);
+      digitalWrite(leftMotor2, LOW);
+      digitalWrite(rightMotor1, LOW);
+      digitalWrite(rightMotor2, LOW);
+      delay(1);
+    }
+     
+
+ //===========================================================
+//----------------------straight-----------------------------
+
+    void straight()
+    {
+      digitalWrite(leftMotor1, LOW);
+      digitalWrite(leftMotor2, HIGH);
+      digitalWrite(rightMotor1, LOW);
+      digitalWrite(rightMotor2, HIGH);
+      delay(1);
+    }
+      //===========================================================
+//----------------------turnleft-----------------------------
+
+    void turnleft ()
+    {
+      digitalWrite(leftMotor1, LOW);
+      digitalWrite(leftMotor2, HIGH);
+      digitalWrite(rightMotor1, HIGH);
+      digitalWrite(rightMotor2, LOW);
+      delay(1);
+    }
+
+    //===========================================================
+ //----------------------fireon-----------------------------
+  void fireon()
+  {
+      for(pos=60 ; pos<=120 ; pos+=1)
+      {
+       myservo.write(pos);
+        delay(20);
+        digitalWrite(22,HIGH);
+       // digitalWrite(17,LOW);
+       // digitalWrite(18,HIGH);
+       // digitalWrite(19,LOW);
+      }
+      for(pos=120;pos>=60;pos-=1)
+      {
+        myservo.write(pos);
+        delay(20);
+        digitalWrite(22,HIGH);
+       // digitalWrite(17,LOW);
+       // digitalWrite(18,HIGH);
+       // digitalWrite(19,LOW);
+      }
+  }  
+  //--------------------------------------------
